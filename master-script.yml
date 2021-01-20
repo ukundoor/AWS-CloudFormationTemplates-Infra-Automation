@@ -9,7 +9,7 @@ Parameters:
 
   TemplateBucket:
     Type: String
-    Default: cft-crossaccount-organizationaccessrolev2
+    Default: your-default-bucket-name
     Description: The template bucket for the CloudFormation templates
 
   EnvironmentName:
@@ -32,8 +32,8 @@ Parameters:
 
   
 
-  BMNIP:
-    Description: This is the IP address for BMN_Host
+  HOST_IP:
+    Description: This is the IP address for Host
     Type: String
     MinLength: 9
     MaxLength: 18
@@ -133,7 +133,7 @@ Resources:
   VpcStack:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: !Sub https://s3.amazonaws.com/${TemplateBucket}/customer_init_vpc1.yml
+      TemplateURL: !Sub https://s3.amazonaws.com/${TemplateBucket}/vpc.yml
       Parameters:
         AvailabilityZone1: !Ref AvailabilityZone1
         SSHFrom: !Ref SSHFrom
@@ -143,7 +143,7 @@ Resources:
   EC2Stack:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: !Sub https://s3.amazonaws.com/${TemplateBucket}/customer_init_avatar1.yml
+      TemplateURL: !Sub https://s3.amazonaws.com/${TemplateBucket}/ec2_private.yml
       Parameters:
         NetworkStackName: !GetAtt VpcStack.Outputs.Name
         EC2KeyPairName: !Ref KeyName
@@ -152,7 +152,7 @@ Resources:
   EC2Stack2:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: !Sub https://s3.amazonaws.com/${TemplateBucket}/customer_init_bastion1.yml
+      TemplateURL: !Sub https://s3.amazonaws.com/${TemplateBucket}/bastion_ec2_public.yml
       Parameters:
         NetworkStackName: !GetAtt VpcStack.Outputs.Name
         EC2KeyPairName: !Ref KeyName
