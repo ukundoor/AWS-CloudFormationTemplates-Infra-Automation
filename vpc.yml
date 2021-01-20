@@ -13,8 +13,8 @@ Parameters:
     Type: AWS::EC2::AvailabilityZone::Name
     ConstraintDescription: Must be a valid availability zone
     
-  BMNIP:
-    Description: This is the IP address for BMN_Host
+  HOSTIP:
+    Description: This is the IP address for Host
     Type: String
     MinLength: 9
     MaxLength: 18
