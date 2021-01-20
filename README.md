@@ -41,7 +41,7 @@ $ aws cloudformation create-stack --stack-name <name-of-your-stack> --template-u
 *	Stack Name: To follow the progress of the stack build through the console or the CLI statements
 *	Template URL: S3 Bucket URL where the master is being stored (or) git repo URL where the master script/nested scripts are being stored
 *	Key Name: EC2 Key Pair used to create new instances
-*	Template Bucket: S3 Bucket where nested scripts are stored (you would only need this parameter if you stroing scripts in S3 bucket. (Note:if you are using git you 	would not need this parameter)
+*	Template Bucket: S3 Bucket where nested scripts are stored (you would only need this parameter if you are stroing scripts in S3 bucket. (Note:if you are using git you would not need this parameter)
   
   
 
