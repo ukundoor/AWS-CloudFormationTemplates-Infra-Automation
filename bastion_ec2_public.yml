@@ -29,8 +29,8 @@ Parameters:
     
   NetworkStackName:
     Type: String
-    Description: VpcId of the vpc we are launching these load balancers in.  This
-      comes from the output of vpc.template
+    Description: VpcId of the vpc we are launching in.  This
+      comes from the output of vpc.yaml
     
 
   
