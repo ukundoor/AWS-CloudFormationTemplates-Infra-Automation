@@ -1,0 +1,172 @@
+---
+AWSTemplateFormatVersion: 2010-09-09
+
+
+Description: Master Teamplate that creates cross account role(IAM), VPC and EC2 instances
+
+
+Parameters:
+
+  TemplateBucket:
+    Type: String
+    Default: cft-crossaccount-organizationaccessrolev2
+    Description: The template bucket for the CloudFormation templates
+
+  EnvironmentName:
+    Type: String
+    Description: Environment name - dev or prod
+    Default: dev
+    AllowedValues:
+      - dev
+      - prod
+    ConstraintDescription: Specify either dev or prod
+    
+  
+    
+
+  # vpc.cfn.yml parameters
+  AvailabilityZone1:
+    Description: The first availability zone in the region
+    Type: AWS::EC2::AvailabilityZone::Name
+    ConstraintDescription: Must be a valid availability zone
+
+  
+
+  BMNIP:
+    Description: This is the IP address for BMN_Host
+    Type: String
+    MinLength: 9
+    MaxLength: 18
+    Default: 0.0.0.0/0
+    
+  
+  SSHFrom:
+    Description: Limit SSH access to bastion hosts to a CIDR IP block
+    Type: String
+    MinLength: 9
+    MaxLength: 18
+    Default: 0.0.0.0/0
+
+  # EC2 Parameters
+  KeyName:
+    Description: EC2 key pair name for bastion host SSH access
+    Type: AWS::EC2::KeyPair::KeyName
+
+  LogRetentionInDays:
+    Description: Number of days you would like your CloudWatch Logs to be retained
+    Type: Number
+    Default: 90
+  
+
+  InstanceType:
+    Description: The instance type for Elastic Beanstalk
+    Type: String
+    Default: t2.micro
+    ConstraintDescription: Instance type not supported
+    AllowedValues:
+      - t2.micro
+      - t2.medium
+      - t2.large
+      - t2.xlarge
+      - t2.2xlarge
+      - m5.large
+      - m5.xlarge
+      - m5.2xlarge
+      - m5.4xlarge
+      - m5.12xlarge
+      - m5.24xlarge
+      - r4.large
+      - r4.xlarge
+      - r4.2xlarge
+      - r4.4xlarge
+      - r4.8xlarge
+      - r4.16xlarge
+  
+
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: Environment
+        Parameters:
+          - EnvironmentName
+      - Label:
+          default: Region Availability Zones
+        Parameters:
+          - AvailabilityZone1
+          
+      - Label:
+          default: EC2
+        Parameters:
+          - KeyName
+          - LogRetentionInDays
+          - InstanceType
+          - SSHFrom
+
+    ParameterLabels:
+      AvailabilityZone1:
+        default: Availability Zone 1
+      PrivateIngressPort:
+        default: Port
+      KeyName:
+        default: EC2 Key Pair
+      LogRetentionInDays:
+        default: Log Retention
+      MFA:
+        default: Multi-Factor
+      SSHFrom:
+        default: SSH Whitelist
+      TemplateBucket:
+        default: CloudFormation Bucket
+      EnvironmentName:
+        default: Environment
+
+Conditions:
+
+   IsProd: !Equals [ !Ref EnvironmentName, prod ]
+
+Resources:
+
+# nested stacks should be pulled out from s3/git
+
+
+  VpcStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub https://s3.amazonaws.com/${TemplateBucket}/customer_init_vpc1.yml
+      Parameters:
+        AvailabilityZone1: !Ref AvailabilityZone1
+        SSHFrom: !Ref SSHFrom
+        SingleNatGateway: !If [ IsProd, false, true ]
+        
+  
+  EC2Stack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub https://s3.amazonaws.com/${TemplateBucket}/customer_init_avatar1.yml
+      Parameters:
+        NetworkStackName: !GetAtt VpcStack.Outputs.Name
+        EC2KeyPairName: !Ref KeyName
+        InstanceWebType: !Ref InstanceType
+
+  EC2Stack2:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub https://s3.amazonaws.com/${TemplateBucket}/customer_init_bastion1.yml
+      Parameters:
+        NetworkStackName: !GetAtt VpcStack.Outputs.Name
+        EC2KeyPairName: !Ref KeyName
+        InstanceWebType: !Ref InstanceType        
+
+Outputs:
+  Name:
+    Description: Master Stack Name
+    Value: !Ref AWS::StackName
+    Export:
+      Name: !Sub ${AWS::StackName}-Name
+
+  VpcStackName:
+    Value: !GetAtt VpcStack.Outputs.Name
+    Export:
+      Name: !Sub ${AWS::StackName}-VpcStackName
+

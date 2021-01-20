@@ -1,0 +1,87 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+Description:  EC2 instance created on the privatesubnet 
+Parameters:
+  EC2KeyPairName:
+    Description: EC2 key pair name for SSH access
+    Type: AWS::EC2::KeyPair::KeyName
+  InstanceWebType:
+    Description: Web EC2 instance type
+    Type: String
+    Default: t2.micro
+    AllowedValues:
+      - t2.micro
+      - m1.small
+      - m1.medium
+      - m1.large
+      - m1.xlarge
+      - m2.xlarge
+      - m2.2xlarge
+      - m2.4xlarge
+      - m3.xlarge
+      - m3.2xlarge
+      - c1.medium
+      - c1.xlarge
+      - cc1.4xlarge
+      - cc2.8xlarge
+      - cg1.4xlarge
+    ConstraintDescription: must be a valid EC2 instance type.
+    
+  NetworkStackName:
+    Type: String
+    Description: VpcId of the vpc we are launching these load balancers in.  This
+      comes from the output of vpc.template
+    
+
+  
+Mappings:
+  AWSRegion2AMI:
+    us-east-1:
+      ami: ami-b70554c8
+    us-east-2:
+      ami: ami-8c122be9
+    us-west-1:
+      ami: ami-e0ba5c83
+    us-west-2:
+      ami: ami-a9d09ed1
+    eu-central-1:
+      ami: ami-7c4f7097
+    eu-west-1:
+      ami: ami-466768ac
+    eu-west-2:
+      ami: ami-b8b45ddf
+    eu-west-3:
+      ami: ami-2cf54551
+Resources:
+  ServerInstance:
+    Type: AWS::EC2::Instance  
+    Properties:
+      ImageId: !FindInMap [AWSRegion2AMI, !Ref "AWS::Region", ami]
+      SecurityGroupIds:
+        - !ImportValue
+            "Fn::Sub": "${NetworkStackName}-PrivateGroupID"
+      SubnetId: 
+          Fn::ImportValue: !Sub "${NetworkStackName}-PrivateSubnet1ID"
+      InstanceType:
+        Ref: InstanceWebType
+      KeyName:
+        Ref: EC2KeyPairName
+      UserData:
+        Fn::Base64:
+          Fn::Join:
+          - ''
+          - - "#!/bin/bash\n"
+            - 'yum install -y httpd'
+            - 'systemctl start httpd'
+            - 'systemctl enable httpd'
+            - 'cfn-init -s '
+            - Ref: AWS::StackId
+            - " -r LaunchConfig "
+            - "         --region "
+            - Ref: AWS::Region
+            - "\n"
+  
+
+  
+
+      
